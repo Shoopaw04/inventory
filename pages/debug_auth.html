@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Authentication</title>
+</head>
+<body>
+    <h1>Authentication Debug</h1>
+    <div id="debug-info"></div>
+    
+    <script>
+        async function debugAuth() {
+            const debugDiv = document.getElementById('debug-info');
+            
+            try {
+                // Test 1: Check if we can get current user
+                console.log('Testing /api/me.php...');
+                const meResponse = await fetch('/inventoryazs/api/me.php', {
+                    credentials: 'include'
+                });
+                const meData = await meResponse.json();
+                debugDiv.innerHTML += `<p><strong>Current User:</strong> ${JSON.stringify(meData, null, 2)}</p>`;
+                
+                // Test 2: Check activity logs API
+                console.log('Testing activity logs API...');
+                const activityResponse = await fetch('/inventoryazs/api/activity_logs.php?limit=5', {
+                    credentials: 'include'
+                });
+                const activityData = await activityResponse.json();
+                debugDiv.innerHTML += `<p><strong>Activity Logs Response:</strong> ${JSON.stringify(activityData, null, 2)}</p>`;
+                
+                // Test 3: Check sales history API
+                console.log('Testing sales history API...');
+                const salesResponse = await fetch('/inventoryazs/api/sales_history.php?limit=5', {
+                    credentials: 'include'
+                });
+                const salesData = await salesResponse.json();
+                debugDiv.innerHTML += `<p><strong>Sales History Response:</strong> ${JSON.stringify(salesData, null, 2)}</p>`;
+                
+            } catch (error) {
+                debugDiv.innerHTML += `<p><strong>Error:</strong> ${error.message}</p>`;
+                console.error('Debug error:', error);
+            }
+        }
+        
+        // Run debug when page loads
+        debugAuth();
+    </script>
+</body>
+</html>

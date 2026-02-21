@@ -1,0 +1,496 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Inventory Management</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .table-scroll { max-height: 65vh; overflow: auto; }
+    .table-scroll thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 2; }
+    /* Enhanced styles for new features */
+    .action-buttons {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    
+    .action-btn {
+      padding: 4px 8px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .btn-transfer { background: #007bff; color: white; }
+    .btn-edit { background: #28a745; color: white; }
+    .btn-delete { background: #dc3545; color: white; }
+    .btn-restore { background: #17a2b8; color: white; }
+    
+    .action-btn:hover { opacity: 0.8; }
+    
+    .stock-transfer-modal,
+    .reorder-edit-modal,
+    .low-stock-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      background: white;
+      margin: 50px auto;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      position: relative;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    
+    .close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .stock-display {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    
+    .stock-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+    }
+    
+    .low-stock-alert {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      display: none;
+    }
+    
+    .out-of-stock { background-color: #ffebee; }
+    .low-stock { background-color: #fff3e0; }
+    .inactive-product { 
+      background-color: #f5f5f5; 
+      opacity: 0.7;
+      text-decoration: line-through;
+    }
+
+    /* Stock pill badges */
+    .stock-pill { display:inline-block; min-width:28px; text-align:center; padding:2px 6px; border-radius:4px; font-weight:bold; }
+    .stock-pill.ok { background:#e0f7fa; color:#006064; }
+    .stock-pill.low { background:#ffe0b2; color:#e65100; }
+    .stock-pill.zero { background:#ffcdd2; color:#b71c1c; }
+    
+    .filter-advanced {
+      display: none;
+      margin-top: 10px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-row > * {
+      flex: 1;
+      min-width: 150px;
+    }
+    
+    .alert-badge {
+      background: #dc3545;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      position: absolute;
+      top: -8px;
+      right: -8px;
+    }
+    
+    .low-stock-btn {
+      position: relative;
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    
+    .editable-cell {
+      cursor: pointer;
+      border: 1px solid transparent;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+    
+    .editable-cell:hover {
+      background: #f0f0f0;
+      border-color: #ddd;
+    }
+    
+    .editing {
+      background: white !important;
+      border-color: #007bff !important;
+    }
+    
+    /* New styles for product name editing */
+    .editable-name {
+      cursor: pointer;
+      border: 1px solid transparent;
+      padding: 2px 4px;
+      border-radius: 3px;
+      transition: all 0.2s ease;
+    }
+    
+    .editable-name:hover {
+      background: #e3f2fd;
+      border-color: #2196f3;
+    }
+
+    .modal-tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .modal-tab {
+      flex: 1;
+      padding: 10px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .modal-tab.active {
+      border-bottom-color: #007bff;
+      color: #007bff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .input-with-icon {
+      position: relative;
+    }
+
+    .input-with-icon input {
+      padding-left: 35px;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #666;
+    }
+
+    .validation-message {
+      color: #dc3545;
+      font-size: 12px;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1> Inventory Management</h1>
+      <nav class="nav-menu">
+        <a href="inventory.html" class="nav-link active">Current Inventory</a>
+        <a href="stock-movements.html" class="nav-link">Stock Movements</a>
+        <a href="manual-adjustments.html" class="nav-link">Manual Adjustments</a>
+        <a href="categories.html" class="nav-link">Categories</a>
+        <a href="stockin_inventory.html" class="nav-link">Stock Ins</a>
+        <a href="supplier_returns.html" class="nav-link">Suppliers return</a>
+      </nav>
+      <button id="stock-alerts-btn" class="low-stock-btn" onclick="showStockAlerts()">
+        ⚠️ Stock Alerts
+        <span class="alert-badge" id="stock-alert-badge" style="display: none;">0</span>
+      </button>
+    </div>
+
+    <div class="stats-summary">
+      <div class="stat-card">
+        <div class="stat-number" id="total-products">-</div>
+        <div class="stat-label">Total Products</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="total-value">-</div>
+        <div class="stat-label">Total Value</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="low-stock-count">-</div>
+        <div class="stat-label">Low Stock Items</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="out-of-stock-count">-</div>
+        <div class="stat-label">Out of Stock</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="categories-count">-</div>
+        <div class="stat-label">Categories</div>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="search-bar">
+        <input type="search" id="inventory-search" placeholder="🔍 Search products, categories, suppliers...">
+        <select id="category-filter">
+          <option value="">All Categories</option>
+        </select>
+        <select id="stock-status-filter">
+          <option value="">All Stock Levels</option>
+          <option value="in-stock">In Stock</option>
+          <option value="low-stock">Low Stock</option>
+          <option value="out-of-stock">Out of Stock</option>
+        </select>
+        <button onclick="loadInventory()">🔍 Search</button>
+        <button onclick="toggleAdvancedFilters()" class="secondary">⚙️ Advanced</button>
+        <button onclick="refreshInventory()" class="secondary">🔄 Refresh</button>
+      </div>
+      
+      <div class="filter-advanced" id="advanced-filters">
+        <div class="filter-row">
+          <select id="supplier-filter">
+            <option value="">All Suppliers</option>
+          </select>
+          <label>
+            <input type="checkbox" id="show-inactive"> Show Inactive Products
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="low-stock-alert" id="low-stock-alert">
+      <strong>⚠️ Low Stock Alert:</strong>
+      <span id="low-stock-message"></span>
+      <button onclick="hideLowStockAlert()" style="float: right; background: none; border: none;">×</button>
+    </div>
+
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+         
+          <th>Name</th>
+          <th>Category</th>
+          <th>Unit</th>
+          <th>Supplier</th>
+          <th>Warehouse Stock</th>
+          <th>Display Stock</th>
+          <th>Total Stock</th>
+          <th>Reorder Level</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Expiry Date</th>
+          <th>Last Updated</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="inventory-body">
+        <tr><td colspan="13" class="loading">🔄 Loading...</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Stock Alerts Modal (merged) -->
+  <div class="low-stock-modal" id="low-stock-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>⚠️ Stock Alerts</h3>
+        <button class="close" onclick="closeLowStockModal()">×</button>
+      </div>
+      <div id="low-stock-products">
+        <p>Loading alerts...</p>
+      </div>
+      <div style="text-align: right; margin-top: 20px;">
+        <button onclick="closeLowStockModal()" class="secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Transfer Modal (restored) -->
+  <div class="stock-transfer-modal" id="stock-transfer-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Transfer Stock to Display</h3>
+        <button class="close" onclick="closeTransferModal()">×</button>
+      </div>
+      <div class="stock-display">
+        <div class="stock-item">
+          <span>Product:</span>
+          <span id="transfer-product-name">-</span>
+        </div>
+        <div class="stock-item">
+          <span>Current Warehouse Stock:</span>
+          <span id="transfer-warehouse-stock">-</span>
+        </div>
+        <div class="stock-item">
+          <span>Current Display Stock:</span>
+          <span id="transfer-display-stock">-</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="transfer-quantity">Quantity to Transfer:</label>
+        <input type="number" id="transfer-quantity" min="1" placeholder="Enter quantity">
+      </div>
+      <div style="text-align: right; margin-top: 20px;">
+        <button onclick="closeTransferModal()" class="secondary">Cancel</button>
+        <button onclick="executeTransfer()" class="btn-transfer">Transfer Stock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reorder/Edit Modal (restored) -->
+  <div class="reorder-edit-modal" id="reorder-edit-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Product Details</h3>
+        <button class="close" onclick="closeReorderModal()">×</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="modal-tab active" onclick="switchTab('reorder')">📊 Reorder Level</button>
+        <button class="modal-tab" onclick="switchTab('details')">✏️ Product Details</button>
+      </div>
+
+      <div class="success-message" id="edit-success-message"></div>
+
+      <div class="tab-content active" id="reorder-tab">
+        <div class="stock-display">
+          <div class="stock-item">
+            <span>Product:</span>
+            <span id="reorder-product-name">-</span>
+          </div>
+          <div class="stock-item">
+            <span>Current Total Stock:</span>
+            <span id="reorder-current-stock">-</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="new-reorder-level">New Reorder Level:</label>
+          <div class="input-with-icon">
+            <span class="input-icon">📊</span>
+            <input type="number" id="new-reorder-level" min="0" placeholder="Enter reorder level">
+          </div>
+          <div class="validation-message" id="reorder-validation"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="details-tab">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="edit-product-name">Product Name:</label>
+            <div class="input-with-icon">
+              <span class="input-icon">🏷️</span>
+              <input type="text" id="edit-product-name" placeholder="Enter product name">
+            </div>
+            <div class="validation-message" id="name-validation"></div>
+          </div>
+          <div class="form-group">
+            <label for="edit-product-price">Price (₱):</label>
+            <div class="input-with-icon">
+              <span class="input-icon">💰</span>
+              <input type="number" id="edit-product-price" step="0.01" min="0" placeholder="Enter price">
+            </div>
+            <div class="validation-message" id="price-validation"></div>
+          </div>
+          <div class="form-group">
+            <label for="edit-product-unit">Unit of Measure:</label>
+            <div class="input-with-icon">
+              <span class="input-icon">📏</span>
+              <input type="text" id="edit-product-unit" placeholder="e.g., pcs, kg, liter">
+            </div>
+          </div>
+        </div>
+        <div class="stock-display">
+          <div class="stock-item"><span>Product ID:</span><span id="edit-product-id">-</span></div>
+          <div class="stock-item"><span>Category:</span><span id="edit-product-category">-</span></div>
+          <div class="stock-item"><span>Supplier:</span><span id="edit-product-supplier">-</span></div>
+        </div>
+      </div>
+
+      <div style="text-align: right; margin-top: 20px;">
+        <button onclick="closeReorderModal()" class="secondary">Cancel</button>
+        <button onclick="saveChanges()" class="btn-edit" id="save-changes-btn">💾 Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/inventory.js"></script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Stock In Inventory - Inventory Management</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .returns-section {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+    
+    .returns-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 5px;
+      margin-top: 10px;
+    }
+    
+    .returns-inputs input {
+      width: 100%;
+      padding: 5px;
+      font-size: 12px;
+    }
+    
+    .returns-inputs select {
+      width: 100%;
+      padding: 5px;
+      font-size: 12px;
+    }
+    
+    .return-type-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .problem-item {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 3px;
+      padding: 8px;
+      text-align: center;
+    }
+    
+    .problem-item label {
+      display: block;
+      font-size: 11px;
+      margin-bottom: 3px;
+      font-weight: bold;
+    }
+    
+    .enhanced-mode {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+      border: 2px solid #2196f3;
+    }
+    
+    .mode-toggle {
+      background: #2196f3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    
+    .mode-toggle:hover {
+      background: #1976d2;
+    }
+    
+    .returns-summary {
+      background: #e8f5e8;
+      border: 1px solid #4caf50;
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    
+    .hide {
+      display: none;
+    }
+
+    /* Status colors */
+    .status-pending { color: #ff9800; font-weight: bold; }
+    .status-received { color: #2e7d32; font-weight: bold; }
+    .status-rejected { color: #d32f2f; font-weight: bold; }
+    .action-success { color: #2e7d32 !important; font-weight: bold; }
+    .table-scroll { max-height: 420px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="notification" class="notification"></div>
+  
+  <div class="container">
+    <div class="header">
+      <h1> Stock In Receiving</h1>
+      <nav class="nav-menu">
+        <a href="inventory.html" class="nav-link">Current Inventory</a>
+        <a href="stock-movements.html" class="nav-link">Stock Movements</a>
+        <a href="manual-adjustments.html" class="nav-link">Manual Adjustments</a>
+        <a href="categories.html" class="nav-link">Categories</a>
+        <a href="stockin_inventory.html" class="nav-link active">Stock Ins</a>
+        <a href="supplier_returns.html" class="nav-link">Supplier Returns</a>
+      </nav>
+    </div>
+    <div>
+      <a href="dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+  </div>
+  <br>
+    <!-- Mode Toggle -->
+    <div style="text-align: center; margin: 20px 0;">
+      <button id="mode-toggle" class="mode-toggle" onclick="toggleReceivingMode()">
+         Switch to (Handle Returns)
+      </button>
+      <p id="mode-description">Current: Simple Mode - Basic receiving only</p>
+    </div>
+
+    <!-- PO Receiving Section -->
+    <div class="receiving-section" id="receiving-section">
+      <h3> Receive Purchase Order</h3>
+      
+      <div class="po-selector">
+        <div class="form-group">
+          <label for="po-select">Select Purchase Order to Receive:</label>
+          <select id="po-select">
+            <option value="">Choose a Purchase Order...</option>
+          </select>
+        </div>
+        <button onclick="loadPODetails()" id="load-po-btn" disabled> Load PO Details</button>
+        <button onclick="toggleManualEntry()" class="secondary"> Manual Entry</button>
+      </div>
+
+      <!-- PO Details Display -->
+      <div id="po-details" class="po-details hide">
+        <div id="po-info"></div>
+        
+        <table class="po-items-table" id="po-items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Ordered Qty</th>
+              <th>Already Received</th>
+              <th>Remaining</th>
+              <th>Receive Now</th>
+              <th>Unit Cost</th>
+              <th>Batch #</th>
+              <th>Expiry Date</th>
+              <th id="th-actions" class="hide-for-clerks">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="po-items-body">
+          </tbody>
+        </table>
+
+        <!-- Enhanced Mode Returns Section -->
+        <div id="enhanced-returns-section" class="returns-section hide">
+          <h4> Problem Items & Returns</h4>
+          <p>Report any damaged, expired, wrong items, or other issues found during receiving:</p>
+          <div id="returns-inputs-container"></div>
+          
+          <div id="returns-summary" class="returns-summary hide">
+            <h5> Returns Summary:</h5>
+            <div id="returns-summary-content"></div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 15px;">
+          <label for="approved-by">Approved By:</label>
+          <select id="approved-by" style="margin: 0 10px;" required>
+            <option value="">Select Manager/Approver...</option>
+          </select>
+          
+          <label for="received-date">Received Date:</label>
+          <input type="date" id="received-date" style="margin: 0 10px;" value="">
+          
+          <label for="receiving-notes">Notes:</label>
+          <input type="text" id="receiving-notes" placeholder="Any remarks..." style="margin: 0 10px;">
+          
+          <button id="process-btn" onclick="processReceiving()" class="primary" style="margin-left: 10px;">✅ Process Receiving</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Entry Section (Hidden by default) -->
+    <div class="manual-entry-section hide" id="manual-entry">
+      <h3>⚠️ Manual Stock In Entry</h3>
+      <p><em>Use this only for direct purchases or items not in any Purchase Order</em></p>
+      
+      <form id="manual-stockin-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="manual-product">Product *</label>
+            <select id="manual-product" name="Product_ID" required>
+              <option value="">Select Product...</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="manual-supplier">Supplier *</label>
+            <select id="manual-supplier" name="Supplier_ID" required>
+              <option value="">Select Supplier...</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="manual-quantity">Quantity *</label>
+            <input type="number" id="manual-quantity" name="Stock_in_Quantity" min="1" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="manual-cost">Unit Cost *</label>
+            <input type="number" id="manual-cost" name="Unit_Cost" step="0.01" min="0" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="manual-batch">Batch Number</label>
+            <input type="text" id="manual-batch" name="Batch_Number">
+          </div>
+          
+          <div class="form-group">
+            <label for="manual-expiry">Expiry Date</label>
+            <input type="date" id="manual-expiry" name="Expiry_Date">
+          </div>
+
+          <div class="form-group">
+            <label for="manual-received-date">Received Date *</label>
+            <input type="date" id="manual-received-date" name="Date_in" required>
+          </div>
+
+          <div class="form-group">
+            <label for="manual-approved-by">Approved By *</label>
+            <select id="manual-approved-by" name="Approved_by" required>
+              <option value="">Select Manager/Approver...</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="manual-remarks">Remarks</label>
+          <textarea id="manual-remarks" name="Remarks" placeholder="Reason for manual entry..."></textarea>
+        </div>
+        
+        <div style="text-align: right;">
+          <button type="button" onclick="toggleManualEntry()" class="secondary">❌ Cancel</button>
+          <button id="manual-submit-btn" type="submit" class="primary">💾 Save Manual Entry</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Stock In History -->
+    <div class="filter-section">
+      <div class="search-bar">
+        <input type="search" id="stockin-search" placeholder="🔍 Search stock ins...">
+        <select id="supplier-filter">
+          <option value="">All Suppliers</option>
+        </select>
+        <select id="status-filter">
+          <option value="">All Status</option>
+          <option value="RECEIVED">✅ Received</option>
+          <option value="PENDING">⏳ Pending</option>
+          <option value="PARTIAL">📦 Partial</option>
+        </select>
+        <input type="date" id="date-from" placeholder="From Date">
+        <input type="date" id="date-to" placeholder="To Date">
+        <button onclick="loadStockIns()">🔍 Search</button>
+        <button onclick="refreshStockIns()" class="secondary">🔄 Refresh</button>
+      </div>
+    </div>
+    
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Stock In ID</th>
+          <th>PO #</th>
+          <th>Received Date</th>
+          <th>Product</th>
+          <th>Supplier</th>
+          <th>Quantity</th>
+          <th>Unit Cost</th>
+          <th>Total Cost</th>
+          <th>Batch</th>
+          <th>Status</th>
+          <th>Approved By</th>
+          <th id="hist-actions-th">Actions</th>
+          
+        </tr>
+      </thead>
+      <tbody id="stockin-body">
+        <tr id="stockin-loading-row"><td colspan="12" class="loading">🔄 Loading stock ins...</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/stockin.js"></script>
+  
+</body>
+</html>

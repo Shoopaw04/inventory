@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: #e2e8f0;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #334155;
+            padding: 24px 0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 24px;
+        }
+        
+        .sidebar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            gap: 12px;
+            font-weight: 500;
+        }
+        
+        .nav-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-left-color: #3b82f6;
+            color: #f8fafc;
+            transform: translateX(4px);
+        }
+        
+        .nav-item.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-left-color: #3b82f6;
+            color: #f8fafc;
+        }
+        
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding: 0 4px;
+        }
+        
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+        
+        .time-selector {
+            select {
+                background: rgba(30, 41, 59, 0.8);
+                border: 1px solid #475569;
+                color: #e2e8f0;
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-size: 14px;
+            }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: #3b82f6;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+        }
+        
+        .stat-title {
+            font-size: 14px;
+            color: #94a3b8;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+        
+        .stat-subtitle {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .chart-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-card:hover {
+            border-color: #475569;
+        }
+        
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .tables-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        
+        .table-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .table-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            background: rgba(51, 65, 85, 0.5);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #334155;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+        
+        .table tr:hover {
+            background: rgba(51, 65, 85, 0.3);
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-low {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .admin-section {
+            margin-top: 24px;
+            padding: 20px 24px;
+            border-top: 1px solid #334155;
+        }
+        
+        .admin-title {
+            color: #f59e0b;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logout-item {
+            margin-top: 24px;
+            border-top: 1px solid #334155;
+            padding-top: 16px;
+        }
+        
+        .logout-item .nav-item {
+            color: #f87171;
+            margin-top: 8px;
+        }
+        
+        .logout-item .nav-item:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tables-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <i data-lucide="layout-dashboard" class="nav-icon"></i>
+                    Dashboard
+                </div>
+            </div>
+            
+            <nav>
+                <a href="#" class="nav-item active">
+                    <i data-lucide="home" class="nav-icon"></i>
+                    Dashboard
+                </a>
+                <a href="add_product.html" class="nav-item">
+                    <i data-lucide="plus-circle" class="nav-icon"></i>
+                    Add Product
+                </a>
+                <a href="inventory.html" class="nav-item">
+                    <i data-lucide="package" class="nav-icon"></i>
+                    Inventory
+                </a>
+                <a href="pos.html" class="nav-item">
+                    <i data-lucide="credit-card" class="nav-icon"></i>
+                    POS Terminal #1
+                </a>
+                <a href="pos.html?terminal=2" class="nav-item">
+                    <i data-lucide="credit-card" class="nav-icon"></i>
+                    POS Terminal #2
+                </a>
+                <a href="pos.html?terminal=3" class="nav-item">
+                    <i data-lucide="credit-card" class="nav-icon"></i>
+                    POS Terminal #3
+                </a>
+                <a href="sales-history.html" class="nav-item">
+                    <i data-lucide="bar-chart-3" class="nav-icon"></i>
+                    Sales History
+                </a>
+                <a href="terminal-management.html" class="nav-item">
+                    <i data-lucide="monitor" class="nav-icon"></i>
+                    Terminal Management
+                </a>
+                <a href="Purchase_order.html" class="nav-item">
+                    <i data-lucide="file-text" class="nav-icon"></i>
+                    Purchase Order
+                </a>
+                <a href="supplier.html" class="nav-item">
+                    <i data-lucide="truck" class="nav-icon"></i>
+                    Suppliers
+                </a>
+                <a href="returns-approval.html" class="nav-item">
+                    <i data-lucide="truck" class="nav-icon"></i>
+                    Customer Returns
+                </a>
+                <div class="admin-section" id="adminSection" style="display: none;">
+                    <div class="admin-title">
+                        <i data-lucide="shield" style="width: 16px; height: 16px;"></i>
+                        Admin Tools
+                    </div>
+                    <a href="user-management.html" class="nav-item">
+                        <i data-lucide="users" class="nav-icon"></i>
+                        User Management
+                    </a>
+                    <a href="user-sessions.html" class="nav-item">
+                        <i data-lucide="search" class="nav-icon"></i>
+                        User Sessions
+                    </a>
+                    <a href="activity-logs.html" class="nav-item">
+                        <i data-lucide="clipboard-list" class="nav-icon"></i>
+                        Activity Logs
+                    </a>
+                    <a href="audit-logs.html" class="nav-item">
+                        <i data-lucide="scroll" class="nav-icon"></i>
+                        Audit Logs
+                    </a>
+                </div>
+                
+                <div class="logout-item">
+                    <a href="#" id="logoutLink" class="nav-item">
+                        <i data-lucide="log-out" class="nav-icon"></i>
+                        Logout
+                    </a>
+                </div>
+            </nav>
+        </div>
+        
+        <div class="main-content">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Dashboard</h1>
+                <div class="time-selector">
+                    <select>
+                        <option>This Week</option>
+                        <option>This Month</option>
+                        <option>This Year</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Total Products</div>
+                    <div class="stat-value">50</div>
+                    <div class="stat-subtitle">The total number of different products</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Total Stock</div>
+                    <div class="stat-value">3,200</div>
+                    <div class="stat-subtitle">Cumulative stock of all items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Total Sales</div>
+                    <div class="stat-value">₱23,450.00</div>
+                    <div class="stat-subtitle">Total value of products sold</div>
+                </div>
+            </div>
+            
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Inventory Summary</div>
+                    <div class="chart-container">
+                        <canvas id="inventoryChart"></canvas>
+                    </div>  
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        Sales Overview
+                        <select style="background: rgba(51, 65, 85, 0.8); border: 1px solid #475569; color: #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 12px;">
+                            <option>This Week</option>
+                            <option>This Month</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tables-grid">
+                <div class="table-card">
+                    <div class="table-header">
+                        <div class="table-title">
+                            <i data-lucide="alert-triangle" style="width: 18px; height: 18px; color: #f59e0b;"></i>
+                            Low Stock
+                        </div>
+                        <button class="btn-primary">Restock All</button>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Stock</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Mouse</td>
+                                <td><span class="status-badge status-low">3</span></td>
+                                <td><button class="btn-primary">Restock</button></td>
+                            </tr>
+                            <tr>
+                                <td>Keyboard</td>
+                                <td><span class="status-badge status-low">4</span></td>
+                                <td><button class="btn-primary">Restock</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-card">
+                    <div class="table-header">
+                        <div class="table-title">
+                            <i data-lucide="activity" style="width: 18px; height: 18px;"></i>
+                            Recent Activities
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Activity</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="user-avatar">A</div>
+                                        Admin
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="plus-circle" style="width: 16px; height: 16px; color: #10b981;"></i>
+                                        Added new product
+                                    </div>
+                                </td>
+                                <td>07/24/2024</td>
+                                <td>15:30</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="user-avatar">A</div>
+                                        Admin
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="edit" style="width: 16px; height: 16px; color: #3b82f6;"></i>
+                                        Updated inventory
+                                    </div>
+                                </td>
+                                <td>07/24/2024</td>
+                                <td>10:12</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inventory Chart (Horizontal Bar)
+            const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
+            new Chart(inventoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Electronics', 'Apparel', 'Home Appliances', 'Accessories'],
+                    datasets: [{
+                        data: [1200, 800, 600, 400],
+                        backgroundColor: [
+                            '#10b981',
+                            '#06b6d4', 
+                            '#f59e0b',
+                            '#ef4444'
+                        ],
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            // Sales Chart (Line)
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        data: [4000, 3000, 5000, 7000, 6000, 5500, 6500],
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#06b6d4',
+                        pointBorderColor: '#0891b2',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Original authentication logic
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const user = await AuthHelper.requireAuthAndRole(['Admin','Manager']);
+                
+                // Add admin-only links if user is admin
+                const userRole = user.role_name || user.Role_name;
+                if (user && userRole === 'Admin') {
+                    document.getElementById('adminSection').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // Logout functionality
+        (function(){
+            const link = document.getElementById('logoutLink');
+            if (link) link.addEventListener('click', function(e){
+                e.preventDefault();
+                AuthHelper.logoutAndRedirect('login.html');
+            });
+        })();
+    </script>
+</body>
+</html>

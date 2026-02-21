@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Purchase Orders</title>
+
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 20px; background: #f8f9fa; }
+    h1 { text-align: center; color: #333; font-weight: 600; }
+    nav { margin-bottom: 20px; display: flex; justify-content: center; gap: 15px; }
+    nav button { padding: 10px 20px; border: none; background: #007bff; color: white; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    nav button.active { background: #0056b3; }
+
+    .form-section { background: white; padding: 20px; border-radius: 8px; margin-top: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 1px solid #e9ecef; }
+    
+    /* Form Grid Layout */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.full-width { grid-column: 1 / -1; }
+    
+    label { display: block; margin: 0 0 6px; font-weight: 500; color: #495057; font-size: 14px; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; transition: border-color 0.15s ease-in-out; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 2px rgba(0,123,255,0.25); }
+    textarea { resize: vertical; min-height: 80px; }
+    
+    button[type="button"], button[type="submit"] { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.15s; }
+    button[type="button"]:hover, button[type="submit"]:hover { background: #0056b3; transform: translateY(-1px); }
+    button.secondary { background: #6c757d; }
+    button.secondary:hover { background: #545b62; }
+    
+    .hidden { display: none; }
+    .step-nav { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; }
+    
+    /* Step Header */
+    .step-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e9ecef; }
+    .step-number { width: 32px; height: 32px; border-radius: 50%; background: #007bff; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+    .step-title { font-size: 18px; font-weight: 600; color: #333; }
+    
+    /* Review Cards */
+    .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .review-card { background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e9ecef; }
+    .review-card h4 { margin: 0 0 10px; color: #495057; font-size: 14px; font-weight: 600; text-transform: uppercase; }
+    .review-value { font-size: 16px; color: #333; font-weight: 500; }
+    .review-card.full-width { grid-column: 1 / -1; }
+    
+    .review-products { background: white; border: 1px solid #dee2e6; border-radius: 6px; overflow: hidden; }
+    .review-products-header { background: #f8f9fa; padding: 12px 15px; border-bottom: 1px solid #dee2e6; font-weight: 600; color: #495057; }
+    .review-product-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f1f3f4; }
+    .review-product-item:last-child { border-bottom: none; }
+    .review-product-name { font-weight: 500; color: #333; }
+    .review-product-details { color: #6c757d; font-size: 13px; }
+    .review-product-total { font-weight: 600; color: #28a745; }
+    
+    .review-summary { background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 20px; border-radius: 6px; text-align: center; }
+    .review-summary-total { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+    .review-summary-items { opacity: 0.9; }
+
+    table { border-collapse: collapse; width: 100%; background: white; margin-top: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f4f4f4; }
+
+    .tag { padding: 3px 6px; border-radius: 4px; font-size: 12px; }
+    .tag.pending { background: #ffc107; color: #000; }
+    .tag.cancelled { background: #dc3545; color: #fff; }
+    .tag.completed { background: #28a745; color: #fff; }
+
+    .toolbar { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+    .pagination { display: flex; gap: 6px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+    .pagination button { padding: 6px 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+    .pagination button.active { background: #007bff; color: #fff; border-color: #007bff; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .muted { color: #666; font-size: 12px; }
+    .error { color: #b00020; }
+    .success { color: #1e7e34; }
+
+    /* IMPROVED POS-STYLE LAYOUT */
+    .product-layout { display: grid; grid-template-columns: 1fr 350px; gap: 15px; align-items: start; min-height: 500px; }
+    
+    /* Product Grid/Search Area */
+    .product-area { background: #fff; border-radius: 6px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .search-bar { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; }
+    .search-bar input { flex: 1; min-width: 200px; margin-bottom: 0; }
+    .search-bar button { margin-bottom: 0; padding: 8px 12px; font-size: 12px; }
+    .quick-actions { background: #f8f9fa; padding: 8px; border-radius: 4px; font-size: 12px; color: #666; }
+
+    /* POS-Style Product Cards */
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; max-height: 450px; overflow-y: auto; overflow-x: hidden; }
+    .product-card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; cursor: pointer; transition: all 0.2s; background: #fff; }
+    .product-card:hover { border-color: #007bff; box-shadow: 0 2px 8px rgba(0,123,255,0.15); transform: translateY(-1px); }
+    .product-card.in-cart { border-color: #28a745; background: #f8fff9; }
+    .product-header { display: flex; justify-content: between; align-items: start; margin-bottom: 8px; }
+    .product-name { font-weight: 600; color: #333; font-size: 14px; flex: 1; }
+    .product-stock { font-size: 12px; color: #666; }
+    .product-stock.low { color: #dc3545; font-weight: 600; }
+    .product-price { font-size: 16px; font-weight: 600; color: #28a745; margin: 4px 0; }
+    .product-actions { display: flex; gap: 6px; align-items: center; }
+    .qty-controls { display: flex; align-items: center; gap: 4px; }
+    .qty-btn { width: 24px; height: 24px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 3px; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+    .qty-btn:hover { background: #f0f0f0; }
+    .qty-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .qty-display { min-width: 30px; text-align: center; font-weight: 600; }
+    .qty-input { width: 50px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
+    .add-btn { background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .add-btn:hover { background: #0056b3; }
+    .add-btn.added { background: #28a745; }
+    .price-input { width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; }
+
+    /* Enhanced Cart */
+    .cart { background: #fff; border: 1px solid #ddd; border-radius: 6px; height: fit-content; }
+    .cart-header { padding: 12px; border-bottom: 1px solid #eee; background: #f9f9f9; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+    .cart-count { background: #007bff; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .cart-body { max-height: 400px; overflow-y: auto; }
+    .cart-item { padding: 12px; border-bottom: 1px solid #f1f1f1; }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px; }
+    .cart-item-name { font-weight: 600; font-size: 14px; flex: 1; }
+    .cart-remove { background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer; padding: 4px 8px; font-size: 12px; }
+    .cart-item-controls { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .cart-qty-controls { display: flex; align-items: center; gap: 4px; }
+    .cart-qty-btn { width: 22px; height: 22px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 3px; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+    .cart-qty-btn:hover { background: #f0f0f0; }
+    .cart-qty-input { width: 60px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; text-align: center; }
+    .cart-price-input { width: 65px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; }
+    .cart-line-total { font-weight: 600; color: #28a745; font-size: 13px; }
+    .cart-empty { padding: 30px; text-align: center; color: #666; font-style: italic; }
+    .cart-totals { padding: 15px; border-top: 2px solid #eee; background: #f9f9f9; }
+    .cart-total-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .cart-total-row.main { font-size: 18px; font-weight: bold; color: #333; }
+    .cart-actions { padding: 12px; }
+    .cart-actions button { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .clear-cart { background: #6c757d; color: white; margin-bottom: 8px; }
+    .clear-cart:hover { background: #5a6268; }
+
+    /* Table View Toggle */
+    .view-toggle { display: flex; gap: 5px; align-items: center; }
+    .view-toggle button { padding: 6px 12px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; font-size: 12px; }
+    .view-toggle button.active { background: #007bff; color: white; border-color: #007bff; }
+
+    /* Table View for Products */
+    .product-table { display: none; max-height: 450px; overflow-y: auto; overflow-x: hidden; }
+    .product-table.active { display: block; }
+    .product-grid.active { display: grid; }
+    .add-to-cart-btn { background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .add-to-cart-btn:hover { background: #0056b3; }
+    .add-to-cart-btn.in-cart { background: #28a745; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: #fff; width: 90%; max-width: 800px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f4f4f4; }
+    .modal-body { padding: 16px; }
+    .modal-close { background: transparent; border: none; font-size: 20px; cursor: pointer; }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .product-layout { grid-template-columns: 1fr; }
+      .cart { order: -1; }
+      .product-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .review-grid { grid-template-columns: 1fr; }
+      .step-nav { flex-direction: column; }
+      .step-nav button { width: 100%; }
+    }
+    /* Added scroll areas to prevent overlap */
+    #step3 { max-height: 70vh; overflow-y: auto; }
+    .modal-body { max-height: 65vh; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/po.js"></script>
+  <script>
+    // PO management: Admin and Manager
+    document.addEventListener('DOMContentLoaded', async () => {
+      await AuthHelper.requireAuthAndRole(['Admin','Manager']);
+    });
+  </script>
+  <h1>Purchase Orders</h1>
+
+  <div>
+    <a href="dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+</div>
+<br>
+
+  <div id="poSection">
+
+    <!-- ============ CREATE PO (ABOVE) ============ -->
+    <div class="form-section">
+      <h2>Create New Purchase Order</h2>
+
+      <!-- Step 1 - IMPROVED FORM DESIGN -->
+      <div id="step1">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <div class="step-title">Order Information</div>
+        </div>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Order Date:</label>
+            <input type="date" id="orderDate" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Expected Delivery Date:</label>
+            <input type="date" id="deliveryDate">
+          </div>
+          
+          <!-- Supplier selection removed per new flow; suppliers derived from products in Step 2 -->
+          
+          <div class="form-group">
+            <label>Priority:</label>
+            <select id="priority">
+              <option value="Normal">Normal</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </div>
+          
+          <div class="form-group full-width">
+            <label>Notes:</label>
+            <textarea id="notes" placeholder="Add any special instructions or notes..."></textarea>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button type="button" class="secondary" onclick="resetForm()">Reset Form</button>
+          <button type="button" onclick="goStep(2)">Next: Select Products →</button>
+        </div>
+      </div>
+
+      <!-- Step 2 - IMPROVED POS-STYLE PRODUCT SELECTION -->
+      <div id="step2" class="hidden">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <div class="step-title">Select Products</div>
+        </div>
+        <div class="product-layout">
+          <div class="product-area">
+            <div class="search-bar">
+              <input type="text" id="productSearch" placeholder="🔍 Search products by name..." oninput="filterProducts()">
+              <select id="supplierSelectStep2" title="Filter products by supplier">
+                <option value="">-- All Suppliers --</option>
+              </select>
+              <div class="view-toggle">
+                <button id="gridViewBtn" class="active" onclick="switchView('grid')">Grid</button>
+                <button id="tableViewBtn" onclick="switchView('table')">Table</button>
+              </div>
+            </div>
+            <div class="quick-actions">
+              💡 Tip: Click products to add them instantly, use +/- to adjust quantities
+            </div>
+            
+            <!-- Grid View (POS Style) -->
+            <div id="productGrid" class="product-grid active"></div>
+            
+            <!-- Table View (Your Original Style) -->
+            <div id="productTable" class="product-table">
+              <table style="display:block; max-height:430px; overflow-y:auto; overflow-x:hidden;">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Stock</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody style="display:block; max-height:380px; overflow-y:auto; overflow-x:hidden;"></tbody>
+              </table>
+            </div>
+            
+            <span class="muted" id="productLoadStatus"></span>
+          </div>
+          
+          <!-- Enhanced Cart -->
+          <aside class="cart" id="cartPanel">
+            <div class="cart-header">
+              <span>Cart</span>
+              <span class="cart-count" id="cartCount">0</span>
+            </div>
+            <div class="cart-body" id="cartBody">
+              <div class="cart-empty">No items in cart</div>
+            </div>
+            <div class="cart-totals">
+              <div class="cart-total-row">
+                <span>Items:</span>
+                <span id="cartItemCount">0</span>
+              </div>
+              <div class="cart-total-row main">
+                <span>Total:</span>
+                <span id="cartTotal">₱0.00</span>
+              </div>
+            </div>
+            <div class="cart-actions">
+              <button type="button" class="clear-cart" onclick="clearCart()">Clear All</button>
+            </div>
+          </aside>
+        </div>
+        <div class="step-nav">
+          <button type="button" class="secondary" onclick="goStep(1)">← Back</button>
+          <button type="button" onclick="goStep(3)">Review Order →</button>
+        </div>
+      </div>
+
+      <!-- Step 3 - IMPROVED REVIEW DESIGN -->
+      <div id="step3" class="hidden">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <div class="step-title">Review & Confirm Order</div>
+        </div>
+        
+        <div class="review-grid">
+          <div class="review-card">
+            <h4>📋 Order Details</h4>
+            <div class="review-value">
+              <div><strong>Date:</strong> <span id="reviewOrderDate">-</span></div>
+              <div><strong>Delivery:</strong> <span id="reviewDeliveryDate">-</span></div>
+              <div><strong>Priority:</strong> <span id="reviewPriority">-</span></div>
+            </div>
+          </div>
+          
+          <div class="review-card">
+            <h4>🏢 Supplier</h4>
+            <div class="review-value" id="reviewSupplier">(none selected)</div>
+          </div>
+          
+          <div class="review-card full-width" id="reviewNotesCard" style="display: none;">
+            <h4>📝 Notes</h4>
+            <div class="review-value" id="reviewNotes"></div>
+          </div>
+        </div>
+        
+        <div class="review-products">
+          <div class="review-products-header">
+            🛒 Order Items
+          </div>
+          <div id="reviewProductsList"></div>
+        </div>
+        
+        <div class="review-summary">
+          <div class="review-summary-total" id="reviewTotal">₱0.00</div>
+          <div class="review-summary-items" id="reviewItemsSummary">0 items selected</div>
+        </div>
+
+        <div class="step-nav">
+          <button type="button" class="secondary" onclick="goStep(2)">← Back to Products</button>
+          <button type="button" onclick="submitPO()" style="background: #28a745;">✓ Create Purchase Order</button>
+        </div>
+        <p id="addPOResponse" class="muted"></p>
+      </div>
+    </div>
+
+    <!-- ============ PO LIST (BELOW) ============ -->
+    <div class="form-section">
+      <h2>Purchase Orders</h2>
+
+      <div class="toolbar">
+        <input type="text" id="poSearch" placeholder="Search supplier or PO ID..." oninput="renderPOs()">
+        <select id="statusFilter" onchange="renderPOs()">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+          <option value="Partial">Partial</option>
+        </select>
+        <select id="pageSize" onchange="changePageSize()">
+          <option value="5">5 / page</option>
+          <option value="10" selected>10 / page</option>
+          <option value="20">20 / page</option>
+          <option value="50">50 / page</option>
+        </select>
+        <span id="poLoadStatus" class="muted"></span>
+      </div>
+
+      <table id="poTable">
+        <thead>
+          <tr>
+            <th>PO ID</th>
+            <th>Supplier</th>
+            <th>Order Date</th>
+            <th>Expected Date</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Items</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="pagination" id="poPagination"></div>
+    </div>
+
+    <!-- PO Details Modal -->
+    <div id="poDetailsOverlay" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Purchase Order Details</h3>
+          <button class="modal-close" onclick="closePOModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <p><strong>PO ID:</strong> <span id="detailPOID"></span></p>
+          <!-- Supplier removed; suppliers are shown per item below -->
+          <p><strong>Order Date:</strong> <span id="detailOrderDate"></span></p>
+          <p><strong>Expected Date:</strong> <span id="detailExpectedDate"></span></p>
+          <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+          <p><strong>Total:</strong> <span id="detailTotal"></span></p>
+          <h3>Items</h3>
+          <table id="poItemsTable">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Supplier</th>
+                <th>Quantity</th>
+                <th>Purchase Price</th>
+                <th>Current Stock</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Supplier Returns - Inventory Management</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .returns-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .summary-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }
+    
+    .summary-card h4 {
+      margin: 0 0 10px 0;
+      color: #495057;
+    }
+    
+    .summary-card .number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #28a745;
+    }
+    
+    .pending-card .number { color: #ffc107; }
+    .processing-card .number { color: #007bff; }
+    .completed-card .number { color: #28a745; }
+    .rejected-card .number { color: #dc3545; }
+    
+    .return-form {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-processing { background-color: #d1ecf1; color: #0c5460; }
+    .status-completed { background-color: #d4edda; color: #155724; }
+    .status-rejected { background-color: #f8d7da; color: #721c24; }
+    
+    .action-buttons {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    
+    .action-buttons button {
+      padding: 5px 10px;
+      font-size: 12px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      margin: 2px 0;
+    }
+    
+    .process-btn { background: #007bff; color: white; }
+    .receive-btn { background: #28a745; color: white; }
+    .reject-btn { background: #dc3545; color: white; }
+    .complete-btn { background: #6c757d; color: white; }
+    
+    .workflow-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    
+    .workflow-step {
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+    
+    .step-pending { background: #ffc107; color: #856404; }
+    .step-processing { background: #007bff; color: white; }
+    .step-completed { background: #28a745; color: white; }
+    .step-inactive { background: #e9ecef; color: #6c757d; }
+    
+    .hide { display: none; }
+    
+    .replacement-form {
+      background: #e3f2fd;
+      border: 2px solid #2196f3;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    
+    .replacement-form h4 {
+      color: #1976d2;
+      margin-bottom: 15px;
+    }
+    
+    .stockin-section {
+      background: #f0f8ff;
+      border: 1px solid #b3d9ff;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="notification" class="notification"></div>
+  
+  <div class="container">
+    <div class="header">
+      <h1>Supplier Return</h1>
+      <nav class="nav-menu">
+        <a href="inventory.html" class="nav-link">Current Inventory</a>
+        <a href="stock-movements.html" class="nav-link">Stock Movements</a>
+        <a href="manual-adjustments.html" class="nav-link">Manual Adjustments</a>
+        <a href="categories.html" class="nav-link">Categories</a>
+        <a href="stockin_inventory.html" class="nav-link">Stock Ins</a>
+        <a href="supplier_returns.html" class="nav-link active">Supplier Returns</a>
+      </nav>
+    </div>
+
+    <!-- Summary Section with Workflow Status -->
+    <div class="summary-cards" id="summary-cards">
+      <div class="summary-card pending-card">
+        <h4>Pending Returns</h4>
+        <div class="number" id="pending-count">-</div>
+      </div>
+      <div class="summary-card processing-card">
+        <h4>Processing Returns</h4>
+        <div class="number" id="processing-count">-</div>
+      </div>
+      <div class="summary-card completed-card">
+        <h4>Completed Returns</h4>
+        <div class="number" id="completed-count">-</div>
+      </div>
+      <div class="summary-card">
+        <h4>Total Pending Value</h4>
+        <div class="number" id="total-pending-value">₱0.00</div>
+      </div>
+    </div>
+
+    <!-- Workflow Guide -->
+    <div class="workflow-status">
+      
+      <span class="workflow-step step-pending">1. PENDING</span>
+      <span>→</span>
+      <span class="workflow-step step-processing">2. PROCESSING</span>
+      <span>→</span>
+      <span class="workflow-step step-completed">3. COMPLETED</span>
+    </div>
+
+    <!-- Create New Return Section -->
+    <div class="returns-header">
+      <h3>Returns Management</h3>
+      <button onclick="toggleReturnForm()" class="primary" id="toggle-form-btn">+ Create New Return</button>
+    </div>
+
+    <!-- New Return Form (Hidden by default) -->
+    <div id="return-form" class="return-form hide">
+      <h4>Create New Return Request</h4>
+      <form id="new-return-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="return-supplier">Supplier *</label>
+            <select id="return-supplier" name="Supplier_ID" required>
+              <option value="">Select Supplier...</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="return-product">Product *</label>
+            <select id="return-product" name="Product_ID" required>
+              <option value="">Select Product...</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="return-quantity">Quantity *</label>
+            <input type="number" id="return-quantity" name="Quantity" min="1" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="return-reason">Reason *</label>
+            <select id="return-reason" name="Reason" required>
+              <option value="">Select Reason...</option>
+              <option value="Damaged">Damaged</option>
+              <option value="Expired">Expired</option>
+              <option value="Wrong_item">Wrong Item</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="return-type">Return Type *</label>
+            <select id="return-type" name="Return_Type" required>
+              <option value="">Select Type...</option>
+              <option value="Refund">Refund</option>
+              <option value="Replace">Replace</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="return-unit-cost">Unit Cost *</label>
+            <input type="number" id="return-unit-cost" name="Unit_Cost" step="0.01" min="0" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="return-po">Purchase Order</label>
+            <select id="return-po" name="PO_ID">
+              <option value="">Select PO (Optional)...</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="return-batch">Batch Number</label>
+            <input type="text" id="return-batch" name="Batch_Number" placeholder="Optional">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="return-expiry">Expiry Date</label>
+          <input type="date" id="return-expiry" name="Expiry_Date">
+        </div>
+        
+        <div class="form-group">
+          <label for="return-notes">Return Notes</label>
+          <textarea id="return-notes" name="Return_Notes" placeholder="Additional details about the return..." rows="3"></textarea>
+        </div>
+        
+        <div style="text-align: right;">
+          <button type="button" onclick="toggleReturnForm()" class="secondary">Cancel</button>
+          <button type="submit" class="primary">Create Return Request (Status: Pending)</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filter-section">
+      <div class="search-bar">
+        <input type="search" id="returns-search" placeholder="Search returns...">
+        <select id="supplier-filter">
+          <option value="">All Suppliers</option>
+        </select>
+        <select id="status-filter">
+          <option value="">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="Processing">Processing</option>
+          <option value="Completed">Completed</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+        <select id="type-filter">
+          <option value="">All Types</option>
+          <option value="Refund">Refund</option>
+          <option value="Replace">Replace</option>
+        </select>
+        <input type="date" id="date-from" placeholder="From Date">
+        <input type="date" id="date-to" placeholder="To Date">
+        <button onclick="loadReturns()">Search</button>
+        <button onclick="refreshReturns()" class="secondary">Refresh</button>
+      </div>
+    </div>
+    
+    <!-- Returns Table with Workflow Actions -->
+    <table>
+      <thead>
+        <tr>
+          <th>Return ID</th>
+          <th>Date</th>
+          <th>Supplier</th>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Reason</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Last Updated</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="returns-body">
+        <tr><td colspan="11" class="loading">Loading returns...</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Replacement Processing Modal -->
+    <div id="replacement-modal" class="replacement-form hide">
+      <h4>Process Replacement Items</h4>
+      <div class="stockin-section">
+        <p><strong>Instructions:</strong> This will call your stockin_inventory system to add the replacement items to inventory.</p>
+        <div id="replacement-details"></div>
+        <div style="margin-top: 15px;">
+          <button id="process-stockin-btn" class="primary">Process Stock-In for Replacements</button>
+          <button onclick="closeReplacementModal()" class="secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="pagination" style="text-align: center; margin: 20px 0;">
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/suppliers_return.js"></script>
+</body>
+</html>

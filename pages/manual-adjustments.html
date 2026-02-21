@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Manual Adjustments - Inventory Management</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .table-scroll { max-height: 65vh; overflow: auto; }
+    .table-scroll thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚖️ Manual Adjustments</h1>
+      <nav class="nav-menu">
+        <a href="inventory.html" class="nav-link">Current Inventory</a>
+        <a href="stock-movements.html" class="nav-link">Stock Movements</a>
+        <a href="manual-adjustments.html" class="nav-link active">Manual Adjustments</a>
+        <a href="categories.html" class="nav-link">Categories</a>
+        <a href="stockin_inventory.html" class="nav-link">Stock Ins</a>
+         <a href="supplier_returns.html" class="nav-link">Suppliers return</a>
+      </nav>
+      <button onclick="showNewAdjustmentModal()" class="primary"> New Adjustment</button>
+    </div>
+    <div>
+      <a href="dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+  </div>
+  <br>
+    <div class="filter-section">
+      <div class="search-bar">
+        <select id="adjustment-status-filter">
+          <option value="">All Statuses</option>
+          <option value="PENDING"> Pending Approval</option>
+          <option value="APPROVED"> Approved</option>
+          <option value="REJECTED"> Rejected</option>
+        </select>
+        <label style="margin-left:8px;">From:
+          <input type="date" id="filter-date-from">
+        </label>
+        <label style="margin-left:8px;">To:
+          <input type="date" id="filter-date-to">
+        </label>
+        <label style="margin-left:8px;">Order:
+          <select id="order-filter">
+            <option value="desc" selected>Newest first</option>
+            <option value="asc">Oldest first</option>
+          </select>
+        </label>
+        <button onclick="loadAdjustments()">🔍 Filter</button>
+        <button onclick="refreshAdjustments()" class="secondary">🔄 Refresh</button>
+      </div>
+    </div>
+    
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Product</th>
+          <th>Old Qty</th>
+          <th>New Qty</th>
+          <th>Change</th>
+          <th>Reason</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="adjustments-body">
+        <tr><td colspan="10" class="loading">🔄 Loading adjustments...</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- View Adjustment Modal -->
+  <div id="viewAdjustmentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeViewAdjustmentModal()">&times;</span>
+      <h2>Adjustment Details</h2>
+      <div class="stock-display">
+        <div class="stock-item"><span>Adjustment ID:</span> <span id="view-adj-id">-</span></div>
+        <div class="stock-item"><span>Product:</span> <span id="view-adj-product">-</span></div>
+        <div class="stock-item"><span>Old Qty:</span> <span id="view-adj-old">-</span></div>
+        <div class="stock-item"><span>New Qty:</span> <span id="view-adj-new">-</span></div>
+        <div class="stock-item"><span>Change:</span> <span id="view-adj-change">-</span></div>
+        <div class="stock-item"><span>Reason:</span> <span id="view-adj-reason">-</span></div>
+        <div class="stock-item"><span>Status:</span> <span id="view-adj-status">-</span></div>
+        <div class="stock-item"><span>Date:</span> <span id="view-adj-date">-</span></div>
+        <div class="stock-item"><span>Requested By:</span> <span id="view-adj-requested">-</span></div>
+        <div class="stock-item"><span>Approved By:</span> <span id="view-adj-approved">-</span></div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="view-adj-notes" rows="3" readonly></textarea>
+      </div>
+      <div class="form-group">
+        <label>Approval Notes</label>
+        <textarea id="view-adj-approval-notes" rows="3" readonly></textarea>
+      </div>
+      <div style="text-align:right; margin-top:10px;">
+        <button class="secondary" onclick="closeViewAdjustmentModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adjustment Modal -->
+  <div id="adjustmentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeAdjustmentModal()">&times;</span>
+      <h2>Manual Inventory Adjustment</h2>
+      
+      <form id="adjustmentForm">
+        <div class="form-group">
+          <label for="adj-product-select">Product *</label>
+          <select id="adj-product-select" name="product_id" required>
+            <option value="">Select a product...</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="adj-current-qty">Current System Quantity</label>
+          <input type="number" id="adj-current-qty" readonly>
+        </div>
+        
+        <div class="form-group">
+          <label for="adj-physical-qty">Physical Count Quantity *</label>
+          <input type="number" id="adj-physical-qty" name="physical_qty" min="0" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="adj-reason">Reason *</label>
+          <select id="adj-reason" name="reason" required>
+            <option value="">Select reason...</option>
+            <option value="PHYSICAL_COUNT_DISCREPANCY">Physical Count Discrepancy</option>
+            <option value="EXPIRED_PRODUCTS">Expired Products</option>
+            <option value="DAMAGED_GOODS">Damaged Goods</option>
+            <option value="THEFT_LOSS">Theft/Loss</option>
+            <option value="SYSTEM_ERROR">System Error Correction</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="adj-notes">Notes</label>
+          <textarea id="adj-notes" rows="3" placeholder="Additional details about the adjustment..."></textarea>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" onclick="closeAdjustmentModal()" class="secondary">Cancel</button>
+          <button type="submit" class="primary">Submit for Approval</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Approval/Rejection Modal -->
+  <div id="approvalModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeApprovalModal()">&times;</span>
+      <h2 id="approvalModalTitle">📋 Approve/Reject Adjustment</h2>
+      
+      <form id="approvalForm">
+        <input type="hidden" id="approval-adjustment-id">
+        <input type="hidden" id="approval-action">
+        
+        <!-- Removed Approved/Rejected By selection; approver is current logged-in user -->
+        
+        <div class="form-group">
+          <label for="approval-notes">Notes</label>
+          <textarea id="approval-notes" rows="3" placeholder="Enter approval/rejection notes..."></textarea>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" onclick="closeApprovalModal()" class="secondary">Cancel</button>
+          <button type="submit" id="approvalSubmitBtn" class="primary">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div> 
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/manual-adjustment.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Categories - Inventory Management</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Categories</h1>
+      <nav class="nav-menu">
+        <a href="inventory.html" class="nav-link">Current Inventory</a>
+        <a href="stock-movements.html" class="nav-link">Stock Movements</a>
+        <a href="manual-adjustments.html" class="nav-link">Manual Adjustments</a>
+        <a href="categories.html" class="nav-link active">Categories</a>
+           <a href="stockin_inventory.html" class="nav-link">Stock Ins</a>
+           <a href="supplier_returns.html" class="nav-link">Suppliers return</a>
+      </nav>
+    </div>
+
+    <div class="filter-section">
+      <div class="search-bar">
+        <input type="search" id="category-search" placeholder="🔍 Search categories...">
+        <button onclick="loadCategories()">🔍 Search</button>
+        <button onclick="refreshCategories()" class="secondary">🔄 Refresh</button>
+      </div>
+    </div>
+    
+    <div class="category-grid" id="categories-grid">
+      <div class="loading">🔄 Loading categories...</div>
+    </div>
+
+    <!-- Products table for when a category is selected -->
+    <div id="products-section" style="display: none; margin-top: 30px;">
+      <div class="section-header">
+        <h2 id="selected-category-title">Products in Category</h2>
+        <button onclick="showAllCategories()" class="secondary">← Back to Categories</button>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Product ID</th>
+            <th>Name</th>
+            <th>Unit</th>
+            <th>Batch #</th>
+            <th>Expiration</th>
+            <th>Supplier</th>
+            <th>Current Stock</th>
+            <th>Reorder Level</th>
+            <th>Price</th>
+            <th>Last Updated</th>
+          </tr>
+        </thead>
+        <tbody id="products-body">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/categories.js"></script>
+   
+</html>

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Add Product</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Arial,sans-serif; background: #f6f8fa; padding: 30px; max-width: 650px; margin: auto;}
+    h1 { text-align: center; }
+    form { background: #fff; border-radius: 10px; padding: 24px 20px 18px 20px; box-shadow: 0 2px 12px #0001; }
+    label { display:block; margin: 12px 0 3px; font-weight: bold;}
+    label.required::after { content: ' *'; color: #d32f2f; }
+    input, select, textarea { width:100%; padding:10px; margin-bottom:4px; border:1px solid #cfd8dc; border-radius: 6px; font-size:1em;}
+    input:required, select:required { border-left: 3px solid #1976d2; }
+    textarea { resize: vertical; }
+    .autocomplete-container { position: relative; }
+    .autocomplete-suggestions { 
+      position: absolute; 
+      top: 100%; 
+      left: 0; 
+      right: 0; 
+      background: white; 
+      border: 1px solid #cfd8dc; 
+      border-top: none; 
+      border-radius: 0 0 6px 6px; 
+      max-height: 200px; 
+      overflow-y: auto; 
+      z-index: 1000; 
+      display: none;
+    }
+    .suggestion-item { 
+      padding: 10px; 
+      cursor: pointer; 
+      border-bottom: 1px solid #f0f0f0; 
+    }
+    .suggestion-item:hover { background: #f5f5f5; }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-meta { font-size: 0.85em; color: #666; }
+    .category-status { 
+      font-size: 0.85em; 
+      padding: 2px 6px; 
+      border-radius: 3px; 
+      margin-left: 8px;
+    }
+    .existing-category { background: #e8f5e8; color: #2e7d32; }
+    .new-category { background: #fff3e0; color: #f57c00; }
+    .row { display: flex; gap: 10px; }
+    .row > div { flex: 1; }
+    .toggle { display: flex; align-items: center; gap: 7px; margin: 8px 0;}
+    .message { display:none; margin: 18px 0 0 0; padding: 10px; border-radius: 6px;}
+    .success { background: #e6ffed; color: #1b5e20;}
+    .error { background: #ffe6e6; color: #8b0000;}
+    .loading { background: #fffde7; color: #b59f00;}
+    button[type="submit"] { background: #1976d2; color: #fff; font-weight: bold; border: none; border-radius:5px; padding: 13px 0; width:100%; cursor: pointer; margin-top:10px;}
+    button[disabled] { opacity: 0.7; cursor: not-allowed;}
+    .hint { color:#888; font-size:0.92em; margin-top:-3px;}
+    .supplier-info { background: #e3f2fd; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 0.9em; }
+    @media(max-width:600px){ .row{flex-direction: column;} }
+  </style>
+</head>
+<body>
+  <h1>Add Product</h1>
+  
+  <div>
+    <a href="dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+</div>
+<br>
+
+  <form id="addProductForm" autocomplete="off">
+    <label for="supplier_id" class="required">Supplier</label>
+    <select name="supplier_id" id="supplier_id" required>
+      <option value="">Select supplier...</option>
+      <!-- Dynamically filled via JS/API -->
+    </select>
+    <div class="hint">Required for purchase order management</div>
+
+    <label for="name" class="required">Product Name</label>
+    <input name="name" id="name" maxlength="100" required placeholder="e.g. Nescafe Classic">
+
+    <label for="category_name" class="required">Category Name</label>
+    <div class="autocomplete-container">
+      <input name="category_name" id="category_name" maxlength="100" required placeholder="e.g. Beverages" autocomplete="off">
+      <div id="category_suggestions" class="autocomplete-suggestions"></div>
+    </div>
+    <div class="hint">
+      Type to search existing categories or enter a new one. 
+      <span id="category_status"></span>
+    </div>
+
+    <label for="description">Product Description</label>
+    <textarea name="description" id="description" rows="2" placeholder="Optional details..."></textarea>
+
+    <label for="category_description">Category Description</label>
+    <textarea name="category_description" id="category_description" rows="1" placeholder="For new category (optional)"></textarea>
+
+    <div class="row">
+      <div>
+        <label for="retail_price">Retail Price (₱)</label>
+        <input name="retail_price" id="retail_price" type="number" min="0" step="0.01" value="0.00">
+      </div>
+      <div>
+        <label for="initial_stock">Initial Stock</label>
+        <input name="initial_stock" id="initial_stock" type="number" min="0" value="0">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="display_stocks">Display Stocks</label>
+        <input name="display_stocks" id="display_stocks" type="number" min="0" value="0">
+        <div class="hint">Quantity placed on shelves for sale</div>
+      </div>
+      <div>
+        <label for="reorder_level">Reorder Level</label>
+        <input name="reorder_level" id="reorder_level" type="number" min="0" value="0" placeholder="Alert when stock reaches...">
+      </div>
+    </div>
+
+    <label for="unit_measure">Unit of Measure</label>
+    <select name="unit_measure" id="unit_measure">
+      <option value="">Select unit</option>
+      <option value="pieces">Pieces</option>
+      <option value="kg">Kilograms</option>
+      <option value="g">Grams</option>
+      <option value="liter">Liters</option>
+      <option value="ml">Milliliters</option>
+      <option value="bottle">Bottle</option>
+      <option value="box">Box</option>
+      <option value="pack">Pack</option>
+      <option value="can">Can</option>
+      <option value="meter">Meter</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label for="batch_number">Batch Number</label>
+        <input name="batch_number" id="batch_number" maxlength="50" placeholder="If applicable">
+      </div>
+      <div>
+        <label for="expiration_date">Expiration Date</label>
+        <input name="expiration_date" id="expiration_date" type="date">
+        <div class="hint">For perishable items</div>
+      </div>
+    </div>
+
+    <!-- Removed performed_by field - will use logged-in user automatically -->
+
+    <div class="toggle">
+      <input type="checkbox" id="is_discontinued" name="is_discontinued" value="1">
+      <label for="is_discontinued"></label>
+    </div>
+
+    <button type="submit" id="submitBtn">Add Product</button>
+    <div id="msg" class="message"></div>
+  </form>
+
+  <!-- API JS (assume postJSON, getSuppliers, etc.) -->
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/add_product.js"></script>
+
+</body>
+</html>
