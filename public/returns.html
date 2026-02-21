@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Returns</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script defer src="../js/returns.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            min-height: 100vh;
+            color: #2d3748;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .page-header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: #fff; 
+            border-radius: 16px; 
+            padding: 28px 32px; 
+            margin-bottom: 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .page-title { 
+            font-size: 28px; 
+            font-weight: 700; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            letter-spacing: -0.5px; 
+        }
+        
+        .section { 
+            background: rgba(255, 255, 255, 0.95); 
+            border: 1px solid rgba(226, 232, 240, 0.8); 
+            padding: 24px; 
+            margin-bottom: 20px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .section:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+        
+        .section h3 {
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        
+        .return-item-row { 
+            display: grid; 
+            grid-template-columns: 180px 1fr 120px 260px 48px; 
+            gap: 12px; 
+            align-items: center; 
+            margin-bottom: 12px; 
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+        
+        .return-item-row:hover {
+            background: #f7fafc;
+        }
+        
+        .pill { 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            background: linear-gradient(135deg, #e6f3ff 0%, #f0f8ff 100%); 
+            color: #3182ce; 
+            border: 1px solid #bee3f8; 
+            font-weight: 500; 
+            font-size: 13px;
+            display: inline-block;
+        }
+        
+        .btn { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: #fff; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary { 
+            background: #fff; 
+            color: #667eea; 
+            border: 1px solid #e2e8f0; 
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary:hover { 
+            background: #f7fafc; 
+            border-color: #cbd5e0;
+        }
+        
+        .list { 
+            background: #fff; 
+            border-radius: 12px; 
+            border: 1px solid #e2e8f0; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
+            overflow: hidden; 
+        }
+        
+        .list-head, .list-row { 
+            display: grid; 
+            grid-template-columns: 80px 1fr 100px 120px 120px; 
+            padding: 16px 12px; 
+            gap: 8px;
+        }
+        
+        .list-head { 
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+            font-weight: 600; 
+            color: #4a5568; 
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .list-row { 
+            border-top: 1px solid #f1f5f9; 
+            transition: background 0.2s ease;
+        }
+        
+        .list-row:hover {
+            background: #f8fafc;
+        }
+        
+        .chip { 
+            background: linear-gradient(135deg, #e6f3ff 0%, #f0f8ff 100%); 
+            color: #3182ce; 
+            border: 1px solid #bee3f8; 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 11px; 
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 16px; 
+            align-items: end;
+        }
+        
+        .form-grid label { 
+            display: block; 
+            font-size: 13px; 
+            color: #4a5568; 
+            margin-bottom: 6px; 
+            font-weight: 500;
+        }
+        
+        .input, select { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 10px; 
+            background: #fff; 
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .return-item-row .field label {
+            display: block;
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 6px;
+            letter-spacing: .2px;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+        }
+        .btn-icon:hover { background: #f7fafc; }
+        
+        .input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .divider { 
+            height: 1px; 
+            background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%); 
+            margin: 20px 0; 
+        }
+        
+        .toolbar { 
+            margin: 12px 0; 
+            display: flex; 
+            gap: 8px; 
+            flex-wrap: wrap;
+        }
+        
+        .toolbar .btn-secondary {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        .status-approved { color: #38a169; background: #f0fff4; border-color: #9ae6b4; }
+        .status-pending { color: #d69e2e; background: #fffaf0; border-color: #fbd38d; }
+        .status-rejected { color: #e53e3e; background: #fff5f5; border-color: #feb2b2; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #718096;
+            font-style: italic;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 22px;
+        }
+        
+        .checkbox-container input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .items-container {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 60px;
+            border: 1px dashed #cbd5e0;
+        }
+        
+        .return-summary {
+            background: linear-gradient(135deg, #e6fffa 0%, #f0fff4 100%);
+            border: 1px solid #9ae6b4;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+        }
+        
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .list-head, .list-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+            
+            .list-head div, .list-row div {
+                padding: 4px 0;
+                border-bottom: 1px solid #f1f5f9;
+            }
+        }
+    </style>
+    </head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <div class="page-title">↩️ Customer Return</div>
+            <div><button class="btn btn-secondary" onclick="window.history.back()">← Back</button></div>
+        </div>
+
+        <div class="section">
+            <h3>🔍 Search Original Transaction</h3>
+            <div class="form-grid">
+                <div><label>Receipt / Sale ID</label><input class="input" type="number" id="sale-id" placeholder="e.g. 12345"></div>
+                <div><label>Date</label><input class="input" type="date" id="sale-date"></div>
+                <div><label>Transaction ID</label><input class="input" type="number" id="txn-id" placeholder="optional"></div>
+                <div style="display:flex; gap:8px; align-items:end;">
+                    <button class="btn" onclick="lookupSale()">🔍 Search Transaction</button>
+                    <button class="btn btn-secondary" onclick="openMySalesLookup()">👀 View My Sales</button>
+                </div>
+            </div>
+            <div class="return-summary" id="sale-summary-container" style="display: none;">
+                <span id="sale-summary" class="pill"></span>
+            </div>
+        </div>
+
+        <div class="section" id="found-sale" style="display:none;">
+            <h3>📦 Transaction Items</h3>
+            <div class="list" style="max-height: 300px; overflow: auto;">
+                <div class="list-head">
+                    <div>Item ID</div>
+                    <div>Product</div>
+                    <div>Price</div>
+                    <div>Qty</div>
+                    <div>Action</div>
+                </div>
+                <div id="found-items"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📋 Items to Return</h3>
+            <div id="items" class="items-container" style="max-height: 300px; overflow: auto;">
+                <div class="empty-state">No items selected for return yet</div>
+            </div>
+            <div class="divider"></div>
+            <div class="form-grid">
+                <div><label>Sale Item ID <small style="color:#718096">(from the transaction above)</small></label><input class="input" type="number" id="manual-si" placeholder="e.g. 94"></div>
+                <div><label>Product</label><input class="input" type="text" id="manual-pname" list="sale-products" placeholder="e.g. Coke"></div>
+                <div><label>Quantity</label><input class="input" type="number" id="manual-qty" min="1" value="1"></div>
+                <div><button class="btn btn-secondary" onclick="addEmptyRowFromInputs()">➕ Add Item Manually</button></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>⚙️ Return Configuration</h3>
+            <div class="form-grid">
+                <div>
+                    <label>Return Type</label>
+                    <select id="return-type" class="input">
+                        <option value="REFUND">💰 Refund</option>
+                        <option value="REPLACE">🔄 Replace (Exchange)</option>
+                    </select>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="auto-apply">
+                    <label>⚡ Auto-apply if eligible (≤ ₱50 and ≤ 30 days)</label>
+                </div>
+                <div><button class="btn" onclick="submitReturn()">📤 Submit Return Request</button></div>
+                <div><span id="submit-status" class="pill" style="display: none;"></span></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📋 My Returns</h3>
+            <div class="toolbar">
+                <button class="btn btn-secondary" onclick="loadMyReturns('All')">All</button>
+                <button class="btn btn-secondary" onclick="loadMyReturns('Pending')">⏳ Pending</button>
+                <button class="btn btn-secondary" onclick="loadMyReturns('Approved')">✅ Approved</button>
+                <button class="btn btn-secondary" onclick="loadMyReturns('Rejected')">❌ Rejected</button>
+            </div>
+            <div class="list" style="max-height: 400px; overflow: auto;">
+                <div class="list-head">
+                    <div>Return ID</div>
+                    <div>Product</div>
+                    <div>Status</div>
+                    <div>Approved On</div>
+                    <div>Qty</div>
+                </div>
+                <div id="my-returns">
+                    <div class="empty-state">No returns found</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>⏳ Pending Status</h3>
+            <div id="pending-status" class="empty-state">No submission yet.</div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="retDetailsModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="retDetailsTitle">Return Details</h3>
+                <span class="close" onclick="document.getElementById('retDetailsModal').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-body" id="retDetailsBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('retDetailsModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Sales Lookup Modal -->
+    <div id="mySalesModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>My Recent Sales</h3>
+                <span class="close" onclick="document.getElementById('mySalesModal').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="my-sales-list" class="list" style="max-height:360px; overflow:auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duplicate/Completed Return Warning Modal -->
+    <div id="duplicateReturnModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Return Already Processed</h3>
+                <span class="close" onclick="document.getElementById('duplicateReturnModal').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="duplicateReturnMessage" style="margin:0 0 12px 0;color:#4a5568;">This sale or item was already returned or is fully requested. New duplicate requests are not allowed.</p>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('duplicateReturnModal').style.display='none'">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Autocomplete source for products from the looked-up sale -->
+    <datalist id="sale-products"></datalist>
+
+    <script>
+        if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    </script>
+</body>
+</html>

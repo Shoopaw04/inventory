@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Terminal Management - Inventory Management</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .terminal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .terminal-card {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+    }
+    
+    .terminal-card:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .terminal-card.online {
+      border-left: 4px solid #28a745;
+    }
+    
+    .terminal-card.offline {
+      border-left: 4px solid #dc3545;
+    }
+    
+    .terminal-card.maintenance {
+      border-left: 4px solid #ffc107;
+    }
+    
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .terminal-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #495057;
+    }
+    
+    .terminal-status {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    
+    .status-online { background: #d4edda; color: #155724; }
+    .status-offline { background: #f8d7da; color: #721c24; }
+    .status-maintenance { background: #fff3cd; color: #856404; }
+    
+    .terminal-info {
+      margin-bottom: 15px;
+    }
+    
+    .terminal-info p {
+      margin: 5px 0;
+      color: #6c757d;
+      font-size: 14px;
+    }
+    
+    .terminal-info strong {
+      color: #495057;
+    }
+    
+    .terminal-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .btn-terminal {
+      padding: 6px 12px;
+      border: 1px solid #007bff;
+      background: white;
+      color: #007bff;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s;
+    }
+    
+    .btn-terminal:hover {
+      background: #007bff;
+      color: white;
+    }
+    
+    .btn-terminal.danger {
+      border-color: #dc3545;
+      color: #dc3545;
+    }
+    
+    .btn-terminal.danger:hover {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .summary-section {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    
+    .summary-item {
+      text-align: center;
+    }
+    
+    .summary-item h4 {
+      margin: 0 0 5px 0;
+      color: #6c757d;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+    
+    .summary-item .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #007bff;
+    }
+    
+    .terminal-stats {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .stats-table th,
+    .stats-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .stats-table th {
+      background: #f8f9fa;
+      font-weight: bold;
+      color: #495057;
+    }
+  </style>
+</head>
+<body>
+  <div id="notification" class="notification"></div>
+  
+  <div class="container">
+    <div class="header">
+      <h1>🖥️ Terminal Management</h1>
+      <nav class="nav-menu">
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="pos.html" class="nav-link">POS</a>
+        <a href="inventory.html" class="nav-link">Inventory</a>
+        <a href="sales-history.html" class="nav-link">Sales History</a>
+        <a href="terminal-management.html" class="nav-link active">Terminal Management</a>
+      </nav>
+    </div>
+    <div>
+      <a href="dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+  </div>
+  <br>
+    <!-- Summary Section -->
+    <div class="summary-section">
+      <h3>Terminal Overview</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <h4>Total Terminals</h4>
+          <div class="value" id="totalTerminals">3</div>
+        </div>
+        <div class="summary-item">
+          <h4>Online</h4>
+          <div class="value" id="onlineTerminals">0</div>
+        </div>
+        <div class="summary-item">
+          <h4>Offline</h4>
+          <div class="value" id="offlineTerminals">0</div>
+        </div>
+        <div class="summary-item">
+          <h4>Maintenance</h4>
+          <div class="value" id="maintenanceTerminals">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal Cards -->
+    <div class="terminal-grid" id="terminalGrid">
+      <!-- Terminal cards will be populated here -->
+    </div>
+
+    <!-- Terminal Statistics -->
+    <div class="terminal-stats">
+      <h3>Terminal Performance (Last 24 Hours)</h3>
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Terminal</th>
+            <th>Status</th>
+            <th>Current User</th>
+            <th>Sales Today</th>
+            <th>Transactions</th>
+            <th>Last Activity</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="terminalStatsBody">
+          <tr><td colspan="7" class="loading">🔄 Loading terminal statistics...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Terminal Configuration Modal -->
+  <div id="terminalConfigModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeTerminalConfigModal()">&times;</span>
+      <h2>Terminal Configuration</h2>
+      <div id="terminalConfigContent">
+        <form id="terminalConfigForm">
+          <div class="form-group">
+            <label for="terminalName">Terminal Name</label>
+            <input type="text" id="terminalName" name="terminal_name" required>
+          </div>
+          <div class="form-group">
+            <label for="terminalLocation">Location</label>
+            <input type="text" id="terminalLocation" name="location" required>
+          </div>
+          <div class="form-group">
+            <label for="terminalStatus">Status</label>
+            <select id="terminalStatus" name="status" required>
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="terminalNotes">Notes</label>
+            <textarea id="terminalNotes" name="notes" rows="3"></textarea>
+          </div>
+          <div style="text-align: right;">
+            <button type="button" onclick="closeTerminalConfigModal()" class="secondary">Cancel</button>
+            <button type="submit" class="primary">Save Configuration</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/terminal_management.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+

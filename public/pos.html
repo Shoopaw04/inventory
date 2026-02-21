@@ -1,0 +1,865 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Grocery Store POS System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .pos-header {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-bottom: 3px solid #2a5298;
+    }
+
+    .pos-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2a5298;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .pos-info {
+      display: flex;
+      gap: 30px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .pos-info div {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+    }
+
+    .main-pos-container {
+      display: flex;
+      height: calc(100vh - 80px);
+      gap: 0;
+    }
+
+    /* Left Panel - Transaction Area */
+    .transaction-panel {
+      flex: 1.2;
+      background: rgba(255, 255, 255, 0.98);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .barcode-section {
+      background: #f8f9ff;
+      border: 2px solid #2a5298;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .barcode-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #2a5298;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .barcode-input {
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      background: white;
+      transition: border-color 0.3s;
+    }
+
+    .barcode-input:focus {
+      outline: none;
+      border-color: #2a5298;
+      box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+    }
+
+    .scan-instructions {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    .transaction-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .transaction-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #eee;
+    }
+
+    .transaction-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .item-count {
+      background: #2a5298;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .transaction-list {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      max-height: 400px;
+    }
+
+    .transaction-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.2s;
+    }
+
+    .transaction-item:hover {
+      background-color: #f8f9ff;
+    }
+
+    .transaction-item:last-child {
+      border-bottom: none;
+    }
+
+    .item-info {
+      flex: 1;
+    }
+
+    .item-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 2px;
+    }
+
+    .item-details {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .item-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .qty-btn:hover {
+      background: #2a5298;
+      color: white;
+      border-color: #2a5298;
+    }
+
+    .qty-input {
+      min-width: 60px;
+      text-align: center;
+      font-weight: bold;
+      padding: 5px 8px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      background: white;
+      transition: border-color 0.2s;
+    }
+
+    .qty-input:focus {
+      outline: none;
+      border-color: #2a5298;
+      box-shadow: 0 0 0 2px rgba(42, 82, 152, 0.1);
+    }
+
+    .qty-input::-webkit-inner-spin-button,
+    .qty-input::-webkit-outer-spin-button {
+      opacity: 1;
+    }
+
+    .item-total {
+      font-weight: bold;
+      color: #2a5298;
+      font-size: 16px;
+      min-width: 80px;
+      text-align: right;
+    }
+
+    .void-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .void-btn:hover {
+      background: #c82333;
+    }
+
+    .empty-transaction {
+      text-align: center;
+      color: #999;
+      padding: 50px 20px;
+      font-style: italic;
+    }
+
+    /* Right Panel - Totals & Payment */
+    .payment-panel {
+      width: 400px;
+      background: rgba(255, 255, 255, 0.98);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      border-left: 3px solid #2a5298;
+    }
+
+    .totals-section {
+      background: #f8f9ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 2px solid #e3e9ff;
+    }
+
+    .totals-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #2a5298;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .total-row:last-child {
+      border-bottom: none;
+      margin-top: 10px;
+      padding-top: 15px;
+      border-top: 2px solid #2a5298;
+    }
+
+    .total-row.final-total {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2a5298;
+    }
+
+    .total-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .total-amount {
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* Payment Input Section */
+    .payment-input-section {
+      background: #fff8dc;
+      border: 2px solid #ffd700;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .payment-input-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #b8860b;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .payment-amount-input {
+      width: 100%;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      text-align: center;
+      background: white;
+      transition: border-color 0.3s;
+    }
+
+    .payment-amount-input:focus {
+      outline: none;
+      border-color: #ffd700;
+      box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+    }
+
+    .change-display {
+      margin-top: 15px;
+      padding: 15px;
+      background: #e8f5e8;
+      border: 2px solid #28a745;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+
+    .change-display.show {
+      display: block;
+    }
+
+    .change-display.insufficient {
+      background: #f8d7da;
+      border-color: #dc3545;
+    }
+
+    .change-label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .change-amount {
+      font-size: 24px;
+      font-weight: bold;
+      color: #28a745;
+    }
+
+    .change-amount.insufficient {
+      color: #dc3545;
+    }
+
+    .payment-methods {
+      margin-bottom: 20px;
+    }
+
+    .payment-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .payment-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .payment-btn {
+      padding: 15px 12px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    .payment-btn:hover {
+      border-color: #2a5298;
+      background: #f8f9ff;
+    }
+
+    .payment-btn.active {
+      background: #2a5298;
+      color: white;
+      border-color: #2a5298;
+    }
+
+    .action-buttons {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .primary-btn {
+      padding: 18px;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .primary-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #218838, #1c7a6b);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    }
+
+    .primary-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .secondary-btn {
+      padding: 12px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .secondary-btn:hover {
+      background: #c82333;
+      transform: translateY(-1px);
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .quick-btn {
+      flex: 1;
+      padding: 10px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .quick-btn:hover {
+      background: #5a6268;
+    }
+
+    /* Product Lookup Section */
+    .product-lookup {
+      background: #fff3cd;
+      border: 2px solid #ffd700;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .lookup-title {
+      font-weight: bold;
+      color: #856404;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .product-search {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .search-results {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: white;
+      display: none;
+    }
+
+    .search-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .search-item:hover {
+      background: #f8f9ff;
+    }
+
+    .search-item:last-child {
+      border-bottom: none;
+    }
+
+    .search-item-name {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .search-item-price {
+      color: #2a5298;
+      font-weight: bold;
+      margin-top: 2px;
+    }
+
+    /* Status Messages */
+    .status-message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      text-align: center;
+      display: none;
+    }
+
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    /* Receipt Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 0;
+      border-radius: 12px;
+      width: 450px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      background: #2a5298;
+      color: white;
+      padding: 20px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .close {
+      color: white;
+      font-size: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+
+    .close:hover {
+      opacity: 0.7;
+    }
+
+    .receipt-content {
+      padding: 30px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px dashed #333;
+    }
+
+    .receipt-header h3 {
+      margin-bottom: 10px;
+      color: #2a5298;
+    }
+
+    .receipt-items {
+      margin-bottom: 20px;
+    }
+
+    .receipt-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding: 5px 0;
+    }
+
+    .receipt-total {
+      border-top: 2px solid #333;
+      padding-top: 15px;
+    }
+
+    .receipt-item strong {
+      color: #2a5298;
+    }
+
+    /* Quick Amount Buttons */
+    .quick-amounts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .quick-amount-btn {
+      padding: 8px 12px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .quick-amount-btn:hover {
+      background: #2a5298;
+      color: white;
+      border-color: #2a5298;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #2a5298;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .main-pos-container {
+        flex-direction: column;
+      }
+      
+      .payment-panel {
+        width: 100%;
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+      <div class="pos-header">
+      <div class="pos-title">🏪 Grocery Store POS</div>
+      <div class="pos-info">
+        <div>🖥️ Terminal: <span id="terminalNumber">#1</span></div>
+        <div id="userInfo">👤 Cashier: -</div>
+        <div id="currentTime">🕐 Loading...</div>
+        <button id="logoutBtn" class="secondary-btn" style="margin-left: 10px;">↩️ Logout</button>
+      </div>
+    </div>
+
+  <div class="main-pos-container">
+    <div class="transaction-panel">
+      <!-- Barcode Scanning Section -->
+      <div class="barcode-section">
+        <div class="barcode-title">📊 Barcode Scanner</div>
+        <input type="text" id="barcodeInput" class="barcode-input" placeholder="Scan barcode or enter product code..." autocomplete="off">
+        <div class="scan-instructions">Scan barcode with scanner or manually enter product code and press Enter</div>
+      </div>
+
+      <!-- Product Lookup -->
+      <div class="product-lookup">
+        <div class="lookup-title">🔍 Product Lookup</div>
+        <input type="text" id="productSearch" class="product-search" placeholder="Search product by name...">
+        <div id="searchResults" class="search-results"></div>
+      </div>
+
+      <!-- Status Messages -->
+      <div id="statusSuccess" class="status-message status-success"></div>
+      <div id="statusError" class="status-message status-error"></div>
+
+      <!-- Current Transaction -->
+      <div class="transaction-section">
+        <div class="transaction-header">
+          <div class="transaction-title">Current Transaction</div>
+          <div class="item-count">Items: <span id="transactionCount">0</span></div>
+        </div>
+
+        <div id="transactionList" class="transaction-list">
+          <div class="empty-transaction">No items scanned yet<br><small>Scan a barcode or search for products to begin</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="payment-panel">
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="clearTransaction()">Clear All</button>
+        <button class="quick-btn" onclick="suspendTransaction()">Suspend</button>
+        <button class="quick-btn" onclick="voidLastItem()">Void Last</button>
+        <button class="quick-btn" onclick="window.location.href='returns.html'">Customer Return</button>
+      </div>
+
+      <!-- Totals -->
+      <div class="totals-section">
+        <div class="totals-title">Transaction Total</div>
+        <div class="total-row">
+          <span class="total-label">Subtotal:</span>
+          <span class="total-amount">₱<span id="subtotalAmount">0.00</span></span>
+        </div>
+        <div class="total-row">
+          <span class="total-label">Tax (12%):</span>
+          <span class="total-amount">₱<span id="taxAmount">0.00</span></span>
+        </div>
+        <div class="total-row">
+          <span class="total-label">Discount:</span>
+          <span class="total-amount">₱<span id="discountAmount">0.00</span></span>
+        </div>
+        <div class="total-row final-total">
+          <span class="total-label">TOTAL:</span>
+          <span class="total-amount">₱<span id="finalTotal">0.00</span></span>
+        </div>
+      </div>
+
+      <!-- Payment Amount Input -->
+      <div class="payment-input-section">
+        <div class="payment-input-title">💰 Payment Amount</div>
+        <input type="number" id="paymentAmount" class="payment-amount-input" placeholder="0.00" min="0" step="0.01">
+        
+        <div class="quick-amounts">
+          <button class="quick-amount-btn" onclick="setExactAmount()">Exact</button>
+          <button class="quick-amount-btn" onclick="addQuickAmount(100)">+₱100</button>
+          <button class="quick-amount-btn" onclick="addQuickAmount(500)">+₱500</button>
+          <button class="quick-amount-btn" onclick="addQuickAmount(1000)">+₱1000</button>
+          <button class="quick-amount-btn" onclick="clearPaymentAmount()">Clear</button>
+          <button class="quick-amount-btn" onclick="addQuickAmount(50)">+₱50</button>
+        </div>
+
+        <div id="changeDisplay" class="change-display">
+          <div class="change-label">Change Due:</div>
+          <div id="changeAmount" class="change-amount">₱0.00</div>
+        </div>
+      </div>
+
+      <!-- Payment Methods -->
+      <div class="payment-methods">
+        <div class="payment-title">Payment Method</div>
+        <div class="payment-grid">
+          <button class="payment-btn active" data-payment="CASH">💵 Cash</button>
+          <button class="payment-btn" data-payment="CARD">💳 Card</button>
+          <button class="payment-btn" data-payment="GCASH">📱 GCash</button>
+          <button class="payment-btn" data-payment="PAYMAYA">💰 PayMaya</button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button id="processPayment" class="primary-btn" disabled>💳 Process Payment</button>
+        <button id="clearAll" class="secondary-btn">🗑️ Clear Transaction</button>
+        <button class="secondary-btn" onclick="window.location.href='sales-history.html?scope=pos'">📜 My Sales (This Terminal)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div id="receiptModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">🧾 Transaction Receipt</h2>
+        <span class="close" id="closeModal">&times;</span>
+      </div>
+      <div id="receiptContent" class="receipt-content"></div>
+      <div style="text-align: center; margin: 20px; padding-bottom: 20px;">
+        <button onclick="printReceipt()" style="background: #2a5298; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold;">🖨️ Print Receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/pos.js"></script>
+</body>
+</html>

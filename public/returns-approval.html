@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Returns - Manager Approval</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script defer src="../js/returns-approval.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            min-height: 100vh;
+            color: #2d3748;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .page-header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: #fff; 
+            border-radius: 16px; 
+            padding: 28px 32px; 
+            margin-bottom: 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .page-title { 
+            font-size: 28px; 
+            font-weight: 700; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            letter-spacing: -0.5px; 
+        }
+        
+        .stats { 
+            display: flex; 
+            gap: 16px; 
+            flex-wrap: wrap;
+        }
+        
+        .stat-card { 
+            background: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(8px); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            color: #fff; 
+            padding: 20px 24px; 
+            border-radius: 12px; 
+            text-align: center; 
+            min-width: 140px;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .stat-card .val { 
+            font-size: 26px; 
+            font-weight: 800; 
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        
+        .stat-card .label { 
+            opacity: 0.9; 
+            font-size: 12px; 
+            font-weight: 500;
+        }
+        
+        .toolbar { 
+            margin: 16px 0; 
+            display: flex; 
+            gap: 8px; 
+            align-items: center;
+            flex-wrap: wrap;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+        
+        .toolbar button { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: #fff; 
+            border: none; 
+            padding: 10px 16px; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .toolbar button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .toolbar input { 
+            padding: 10px 14px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+        
+        .toolbar input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .toolbar label {
+            font-weight: 500;
+            color: #4a5568;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: rgba(255, 255, 255, 0.95); 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            backdrop-filter: blur(10px);
+        }
+        
+        th { 
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+            color: #4a5568; 
+            border-bottom: 1px solid #e2e8f0; 
+            padding: 16px 12px; 
+            text-align: left; 
+            font-weight: 600; 
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td { 
+            border-bottom: 1px solid #f1f5f9; 
+            padding: 12px; 
+            color: #2d3748;
+            font-size: 14px;
+        }
+        
+        tr:hover { 
+            background: rgba(102, 126, 234, 0.05); 
+        }
+        
+        .badge { 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-pending { 
+            background: linear-gradient(135deg, #fff6e5 0%, #fef3cd 100%); 
+            color: #b45309; 
+            border: 1px solid #fbbf24; 
+        }
+        
+        .badge-approved { 
+            background: linear-gradient(135deg, #e6fffa 0%, #f0fff4 100%); 
+            color: #047857; 
+            border: 1px solid #34d399; 
+        }
+        
+        .badge-rejected { 
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%); 
+            color: #b91c1c; 
+            border: 1px solid #f87171; 
+        }
+        
+        .chip { 
+            background: linear-gradient(135deg, #e6f3ff 0%, #f0f8ff 100%); 
+            color: #3182ce; 
+            border: 1px solid #bee3f8; 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 11px; 
+            font-weight: 500;
+        }
+        
+        .pill-btn { 
+            background: #fff; 
+            color: #667eea; 
+            border: 1px solid #e2e8f0; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .pill-btn:hover { 
+            background: #f7fafc; 
+            border-color: #cbd5e0;
+            transform: translateY(-1px);
+        }
+        
+        .pill-btn.active {
+            background: #667eea;
+            color: #fff;
+            border-color: #667eea;
+        }
+        
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.5); 
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-content { 
+            background: #fff; 
+            margin: 8% auto; 
+            padding: 0; 
+            border-radius: 16px; 
+            width: 90%;
+            max-width: 520px; 
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); 
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: #fff; 
+            padding: 20px 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-header .close { 
+            cursor: pointer; 
+            font-size: 24px; 
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+        
+        .modal-header .close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .modal-footer {
+            padding: 16px 24px;
+            background: #f8fafc;
+            text-align: right;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .icon {
+            width: 18px;
+            height: 18px;
+            stroke-width: 2;
+            vertical-align: middle;
+        }
+        
+        .icon-sm {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        
+        .icon-btn {
+            width: 16px;
+            height: 16px;
+            stroke-width: 2;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-approve {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-approve:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-reject {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-reject:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+            
+            .stat-card {
+                min-width: 120px;
+                padding: 16px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <div class="page-title">
+                <i data-lucide="package" class="icon"></i>
+                Customer Returns
+            </div>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="val" id="stat-total">0</div>
+                    <div class="label">Total Returns</div>
+                </div>
+                <div class="stat-card">
+                    <div class="val" id="stat-pending">0</div>
+                    <div class="label">Pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="val" id="stat-approved">0</div>
+                    <div class="label">Approved</div>
+                </div>
+                <div class="stat-card">
+                    <div class="val" id="stat-rejected">0</div>
+                    <div class="label">Rejected</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="toolbar">
+            <button class="pill-btn" onclick="loadTab('all')">
+                <i data-lucide="list" class="icon-btn"></i>
+                All
+            </button>
+            <button class="pill-btn" onclick="loadTab('pending')">
+                <i data-lucide="clock" class="icon-btn"></i>
+                Pending
+            </button>
+            <button class="pill-btn" onclick="loadTab('approved')">
+                <i data-lucide="check-circle" class="icon-btn"></i>
+                Approved
+            </button>
+            <button class="pill-btn" onclick="loadTab('rejected')">
+                <i data-lucide="x-circle" class="icon-btn"></i>
+                Rejected
+            </button>
+            <span id="mgr-status"></span>
+        </div>
+
+        <div class="toolbar" id="mgr-actions">
+            <button onclick="decideSelected('APPROVED')">
+                <i data-lucide="check" class="icon-btn"></i>
+                Approve Selected
+            </button>
+            <button onclick="decideSelected('REJECTED')">
+                <i data-lucide="x" class="icon-btn"></i>
+                Reject Selected
+            </button>
+            <label>Comments</label>
+            <input type="text" id="mgr-comments" placeholder="Required for decisions">
+            <div class="checkbox-group">
+                <input type="checkbox" id="exchange-only">
+                <label>
+                    <i data-lucide="repeat" class="icon-btn"></i>
+                    Exchange Only
+                </label>
+            </div>
+        </div>
+
+        <div style="max-height:420px; overflow:auto; border-radius:12px;">
+        <table>
+            <thead>
+                <tr>
+                    <th id="col-pick">
+                        <input type="checkbox" id="select-all">
+                    </th>
+                    <th>Return ID</th>
+                    <th>Actions</th>
+                    <th>Sale ID</th>
+                    <th>SaleItem ID</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Reason</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Approved By</th>
+                    <th>Approved Date</th>
+                    <th>Terminal</th>
+                    <th>Cashier</th>
+                    <th>Return Date</th>
+                </tr>
+            </thead>
+            <tbody id="records-body">
+                <tr>
+                    <td colspan="15" style="text-align: center; padding: 40px; color: #718096; font-style: italic;">
+                        No returns found
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- Decision / Details Modal -->
+    <div id="decisionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="decisionTitle"><i data-lucide="clipboard-check" class="icon-sm"></i> Decision</h3>
+                <span class="close" onclick="closeDecisionModal()"><i data-lucide="x" class="icon"></i></span>
+            </div>
+            <div class="modal-body" id="decisionBody">
+                <!-- dynamically injected: either details or compact decision inputs -->
+            </div>
+            <div class="modal-footer" id="decisionFooter" style="display:none;">
+                <button class="btn-approve" onclick="submitDecision()"><i data-lucide="check" class="icon-btn"></i> Submit Decision</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        // Add select all functionality
+        document.getElementById('select-all').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('#records-body input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+        
+        // Add active state to filter buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterButtons = document.querySelectorAll('.pill-btn');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

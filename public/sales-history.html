@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sales History - Inventory Management</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .terminal-selector {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .terminal-selector h3 {
+      margin: 0 0 10px 0;
+      color: #495057;
+    }
+    
+    .terminal-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .terminal-btn {
+      padding: 8px 16px;
+      border: 2px solid #007bff;
+      background: white;
+      color: #007bff;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .terminal-btn.active {
+      background: #007bff;
+      color: white;
+    }
+    
+    .terminal-btn:hover {
+      background: #0056b3;
+      color: white;
+    }
+    
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .summary-card {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .summary-card h4 {
+      margin: 0 0 10px 0;
+      color: #6c757d;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+    
+    .summary-card .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #007bff;
+    }
+    
+    .table-scroll {
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+    
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    
+    .status-completed { background: #d4edda; color: #155724; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div id="notification" class="notification"></div>
+  
+  <div class="container">
+    <div class="header">
+      <h1>📊 Sales History & Reports</h1>
+      <nav class="nav-menu">
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="pos.html" class="nav-link">POS</a>
+        <a href="inventory.html" class="nav-link">Inventory</a>
+        <a href="sales-history.html" class="nav-link active">Sales History</a>
+        <a href="terminal-management.html" class="nav-link">Terminal Management</a>
+      </nav>
+    </div>
+
+    <!-- Terminal Selector (hidden for Cashier; shown for Admin/Manager) -->
+    <div class="terminal-selector" id="terminalSelector" style="display:none;">
+      <h3>Select Terminal</h3>
+      <div class="terminal-buttons">
+        <button class="terminal-btn active" data-terminal="all">All Terminals</button>
+        <button class="terminal-btn" data-terminal="1">Terminal #1</button>
+        <button class="terminal-btn" data-terminal="2">Terminal #2</button>
+        <button class="terminal-btn" data-terminal="3">Terminal #3</button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <h4>Total Sales</h4>
+        <div class="value" id="totalSales">₱0.00</div>
+      </div>
+      <div class="summary-card">
+        <h4>Total Items</h4>
+        <div class="value" id="totalItems">0</div>
+      </div>
+      <div class="summary-card">
+        <h4>Transactions</h4>
+        <div class="value" id="totalTransactions">0</div>
+      </div>
+      <div class="summary-card">
+        <h4>Average Sale</h4>
+        <div class="value" id="averageSale">₱0.00</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+      <div class="search-bar">
+        <input type="date" id="dateFrom" placeholder="From Date">
+        <input type="date" id="dateTo" placeholder="To Date">
+        <select id="paymentMethod">
+          <option value="">All Payment Methods</option>
+          <option value="CASH">Cash</option>
+          <option value="CARD">Card</option>
+          <option value="DIGITAL">Digital</option>
+        </select>
+        <button onclick="loadSalesHistory()">🔍 Search</button>
+        <button onclick="refreshSalesHistory()" class="secondary">🔄 Refresh</button>
+        <button onclick="exportSalesReport()" class="secondary">📊 Export Report</button>
+      </div>
+    </div>
+    
+    <!-- Sales History Table -->
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Sale ID</th>
+            <th>Terminal</th>
+            <th>Date & Time</th>
+            <th>Cashier</th>
+            <th>Payment Method</th>
+            <th>Subtotal</th>
+            <th>Tax</th>
+            <th>Total</th>
+            <th>Items</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="salesBody">
+          <tr><td colspan="11" class="loading">🔄 Loading sales history...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sale Details Modal -->
+  <div id="saleDetailsModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeSaleDetailsModal()">&times;</span>
+      <h2>Sale Details</h2>
+      <div id="saleDetailsContent"></div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/sales_history.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const user = await AuthHelper.getCurrentUser();
+        if (user && user.Role_name === 'Cashier') {
+          const nav = document.querySelector('.nav-menu');
+          if (nav) {
+            nav.querySelectorAll('.nav-link').forEach(a => {
+              const href = (a.getAttribute('href') || '').toLowerCase();
+              if (href.includes('dashboard') || href.includes('inventory') || href.includes('terminal')) {
+                a.style.display = 'none';
+              }
+            });
+          }
+        }
+      } catch (e) {}
+    });
+  </script>
+</body>
+</html>

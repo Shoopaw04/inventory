@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Stock Movements - Inventory Management</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .table-scroll { max-height: 65vh; overflow: auto; }
+    .table-scroll thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1> Stock Movements</h1>
+      <nav class="nav-menu">
+        <a href="inventory.html" class="nav-link">Current Inventory</a>
+        <a href="stock-movements.html" class="nav-link active">Stock Movements</a>
+        <a href="manual-adjustments.html" class="nav-link">Manual Adjustments</a>
+        <a href="categories.html" class="nav-link">Categories</a>
+          <a href="stockin_inventory.html" class="nav-link">Stock Ins</a>
+           <a href="supplier_returns.html" class="nav-link">Suppliers return</a>
+      </nav>
+    </div>
+    <div>
+      <a href="dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+  </div>
+  <br>
+    <div class="filter-section">
+      <div class="search-bar">
+        <input type="search" id="movements-search" placeholder="🔍 Search by product or movement type...">
+        <select id="movement-type-filter">
+          <option value="">All Movement Types</option>
+          <option value="PURCHASE_RECEIPT">📦 Purchase Receipts</option>
+          <option value="SALE">💰 Sales</option>
+          <option value="RETURN">↩ Returns</option>
+          <option value="ADJUSTMENT_IN">⬆ Adjustments In</option>
+          <option value="ADJUSTMENT_OUT">⬇ Adjustments Out</option>
+          <option value="DAMAGE">💥 Damage/Loss</option>
+          <option value="STOCK_IN">📥 Stock In</option>
+          <option value="REPLENISH_DISPLAY">🔄 Stock Transfer</option>
+          <option value="TRANSFER_IN">🔄 Transfer In</option>
+          <option value="TRANSFER_OUT">🔄 Transfer Out</option>
+        </select>
+        <select id="terminal-filter">
+          <option value="">All Terminals</option>
+        </select>
+        <input type="date" id="date-from" title="From">
+        <input type="date" id="date-to" title="To">
+        <button onclick="loadMovements()"> Search</button>
+        <button onclick="refreshMovements()" class="secondary">🔄 Refresh</button>
+      </div>
+    </div>
+    
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Transaction ID</th>
+          <th>Date/Time</th>
+          <th>Product</th>
+          <th>Movement Type</th>
+          <th>Quantity</th>
+          <th>Reference</th>
+          <th>Terminal</th>
+          <th>Performed By</th>
+          <th>Source Table</th>
+        </tr>
+      </thead>
+      <tbody id="movements-body">
+        <tr><td colspan="9" class="loading">🔄 Loading movements...</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/stockmovements.js"></script>
+</body>
+</html>
